@@ -1,43 +1,38 @@
-import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-export async function POST(req: NextRequest) {
-  try {
-    const { prompt } = await req.json();
-    if (!prompt) return NextResponse.json({ error: "No prompt" }, { status: 400 });
+:root {
+  --font-bebas: 'Bebas Neue', sans-serif;
+  --font-dm-sans: 'DM Sans', sans-serif;
+}
 
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 2000,
-      messages: [{ role: "user", content: prompt }],
-    });
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-    const text = message.content
-      .filter((b) => b.type === "text")
-      .map((b) => (b as { type: "text"; text: string }).text)
-      .join("");
+html,
+body {
+  background-color: #0F0F0F;
+  color: white;
+  font-family: var(--font-dm-sans), sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
 
-    // Strip markdown code fences if present
-    const clean = text.replace(/```json\n?|```\n?/g, "").trim();
-    const parsed = JSON.parse(clean);
+/* Hide scrollbar but keep scroll */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 
-    // Add IDs and completion status to sessions
-    if (parsed.weeks) {
-      parsed.weeks = parsed.weeks.map((week: { weekNumber: number; theme: string; sessions: { id?: string; day: string; title: string; description: string; targetMetric: string; targetValue: number; unit: string; type: string; completed?: boolean }[] }) => ({
-        ...week,
-        sessions: week.sessions.map((session, idx: number) => ({
-          ...session,
-          id: session.id || `w${week.weekNumber}s${idx + 1}`,
-          completed: false,
-        })),
-      }));
-    }
-
-    return NextResponse.json(parsed);
-  } catch (err) {
-    console.error("Plan generation error:", err);
-    return NextResponse.json({ error: "Generation failed" }, { status: 500 });
-  }
+/* iOS safe area for bottom nav */
+.h-safe-bottom {
+  height: env(safe-area-inset-bottom, 0px);
 }
